@@ -336,6 +336,10 @@ void ClPrettyPrint::printCst(const struct cl_operand *op)
             SSD_COLORIZE(out_, C_WHITE) << op->data.cst.data.cst_real.value;
             break;
 
+        case CL_TYPE_STRUCT:
+            CL_ERROR_MSG(&loc_, "constant structure");
+            break;
+
         default:
             CL_TRAP;
     }
