@@ -188,6 +188,7 @@ const char *ClTypeDotGenerator::CltColors[CNT_CL_TYPES] = {
     "green",                        // CL_TYPE_CHAR
     "green",                        // CL_TYPE_BOOL
     "green",                        // CL_TYPE_ENUM
+    "green",                        // CL_TYPE_REAL
     "purple",                       // CL_TYPE_STRING
 };
 
