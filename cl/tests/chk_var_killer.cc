@@ -97,7 +97,7 @@ bool chkAssert(
 
         const std::string varName = varToString(*insn->stor, uid);
         CL_ERROR_MSG(loc, name << ": property violated: "
-                << status << ": " << varName);
+                << status << ": " << ((varName) ? varName : ""));
     }
 
     // built-in handled
