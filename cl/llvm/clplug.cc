@@ -1994,12 +1994,26 @@ bool CLPass::handleCastOperand(Value *v, struct cl_operand *src) {
     CastInst *I = cast<CastInst>(v);
     bool notEmptyAcc = handleOperand(I->getOperand(0), src);
 
+    struct cl_type *resultType = handleType(I->getType());
     if (src->type->code == CL_TYPE_FNC) {
+        // Take care about the known corner cases
+        if (resultType->code == CL_TYPE_PTR && resultType->items[0].type->code == CL_TYPE_FNC) {
+            if (src->data.cst.data.cst_fnc.is_extern) {
+                // We can ignore cast of function to function pointer done
+                // because of external (undefined) function
+                return notEmptyAcc;
+            }
+            else if (resultType->items[0].type->item_cnt <= src->type->item_cnt
+                      && resultType->items[0].type->item_cnt == 1 &&
+                      resultType->items[0].type->items[0].type->code == src->type->items[0].type->code) {
+                // This should be case when a generic function with unspecified
+                // arguments is called with a concrete function pointer
+                return notEmptyAcc;
+            }
+        }
         CL_ERROR("unsupport cast from function type");
         return false;
     }
-
-    struct cl_type *resultType = handleType(I->getType());
 
     if(resultType->code == CL_TYPE_BOOL && src->code == CL_OPERAND_CST) {
         src->type = resultType;
