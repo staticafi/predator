@@ -193,7 +193,7 @@
  * - 1 ... dump a single trace graph for all errors/warnings (may be huge)
  * - 2 ... dump a single trace graph for each error/warning
  */
-#define SE_DUMP_TRACE_GRAPHS                0
+#define SE_DUMP_TRACE_GRAPHS                2
 
 /**
  * - 0 ... kill local variables only on stack frame destruction
@@ -213,7 +213,7 @@
  * - 1 low-cost error recovery (stop analyzing paths with errors already caught)
  * - 2 full error recovery (keep analyzing until a non-recoverable error occurs)
  */
-#define SE_ERROR_RECOVERY_MODE              1
+#define SE_ERROR_RECOVERY_MODE              2
 
 /**
  * if 1, report memory leaks while executing a no-return function
@@ -325,6 +325,8 @@
  * been plotted
  */
 #define SYMPLOT_STOP_AFTER_N_STATES         0
+
+#define PRINT_TRACE                         1
 
 #if 0
 #define SYMPLOT_STOP_CONDITION(name) \
