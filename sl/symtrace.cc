@@ -32,6 +32,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <iostream>
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
@@ -332,6 +333,9 @@ void InsnNode::plotNode(TracePlotter &tplot) const
         << ", label=" << SL_QUOTE(insnToLabel(insn_))
         << ", tooltip=" << INSN_LOC_AND_BB(insn_, this)
         << "];\n";
+#if PRINT_TRACE
+    std::cout << "TRACE " << INSN_LOC_AND_BB(insn_, this) << '\n';
+#endif
 }
 
 void AbstractionNode::plotNode(TracePlotter &tplot) const
@@ -503,6 +507,9 @@ void MsgNode::plotNode(TracePlotter &tplot) const
         << " [shape=tripleoctagon, fontcolor=monospace, color="
         << color << ", fontcolor=red, label="
         << SL_QUOTE((*loc_) << label) << "];\n";
+#if PRINT_TRACE
+    std::cout << "TRACE " << *loc_ << '\n';
+#endif
 }
 
 void UserNode::plotNode(TracePlotter &tplot) const
@@ -546,6 +553,9 @@ void plotTraceCore(TracePlotter &tplot)
 // FIXME: copy-pasted from symplot.cc
 bool plotTrace(const std::string &name, TWorkList &wl, std::string *pName = 0)
 {
+#if PRINT_TRACE
+    std::cout << "TRACE NEW\n";
+#endif
     PlotEnumerator *pe = PlotEnumerator::instance();
     std::string plotName(pe->decorate(name));
     std::string fileName(plotName + ".dot");
