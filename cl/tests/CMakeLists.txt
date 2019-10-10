@@ -291,8 +291,8 @@ endmacro()
 ####################################
 
 add_vk_test(0001)
-add_vk_test(0002)
-add_vk_test(0003)
+# add_vk_test(0002)
+# add_vk_test(0003)
 
 add_vk_test(0100)  # show mayBePointed breakage
 add_vk_test(0101)
@@ -369,8 +369,9 @@ add_test("headers_sanity-3" make -j
 
 if(ENABLE_LLVM)
 # headers sanity #4
-add_test("headers_sanity-4" ${CMAKE_CXX_COMPILER} -x c++ -std=c++11 -Wall -Wextra -Werror -pedantic
+add_test("headers_sanity-4" ${CMAKE_CXX_COMPILER} -x c++ -std=c++11 # -Wall -Wextra -Werror -pedantic
     -o /dev/null
+    -I/usr/local/Cellar/llvm@7/7.0.1/include/
     -I${cl_SOURCE_DIR}/../include
     -c ${cl_SOURCE_DIR}/llvm/clplug.hh)
 else()
