@@ -474,7 +474,7 @@ bool handleAlloca(
     // amount of allocated memory must be known (TODO: relax this?)
     const TValId valSize = core.valFromOperand(opList[/* size */ 2]);
     IR::Range size;
-    if (rngFromVal(&size, core.sh(), valSize) && IR::Int0 <= size.lo) {
+    if (rngFromVal(&size, core.sh(), valSize) && IR::Int0 <= size.lo && isSingular(size)) {
         CL_DEBUG_MSG(loc, "executing " << name << "()");
         core.execStackAlloc(insn.operands[/* dst */ 0], size);
     }
