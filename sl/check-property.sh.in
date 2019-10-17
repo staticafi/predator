@@ -75,6 +75,13 @@ usage() {
     -t, --trace FILE
           A file name to write the trace to.
 
+    -x, --xmltrace FILE
+          A file name to write the XML trace to. (Default: no XML trace)
+          Warning: no colon and no whitespace in FILE allowed
+
+    -d, --depth NUMBER
+          A depth limit. (Default: unlimited)
+
     -v, --verbose
           Prints more information about the result. Not to be used during the
           competition.
@@ -94,18 +101,14 @@ EOF
 }
 
 PRP_FILE=
+DEPTH=""
+XMLTRACE=""
+SRC_FILE=
 
 # write trace to stderr by default
 TRACE="/dev/fd/2"
 
-if [ `uname` = Darwin ]; then
-  ABSPATH='realpath'
-  # mac os doesn't support long option names
-  ARGS=$(getopt p:t:v $*)
-else
-  ABSPATH='readlink -f'
-  ARGS=$(getopt -o p:t:v -l "propertyfile:,trace:,verbose" -n "$SELF" -- "$@")
-fi
+ARGS=$(getopt -o p:t:x:d:v -l "propertyfile:,trace:,xmltrace:,depth:,verbose" -n "$SELF" -- "$@")
 if test $? -ne 0; then
   usage; exit 1;
 fi
@@ -118,12 +121,18 @@ while true; do
       PRP_FILE="$2"; shift 2;;
     -t|--trace)
       TRACE="$2"; shift 2;;
+    -x|--xmltrace)
+      XMLTRACE="$2"; shift 2;;
+    -d|--depth)
+      DEPTH="$2"; shift 2;;
     -v|--verbose)
       export VERBOSE="yes"; shift;;
     --)
       shift; break;;
   esac
 done
+
+SRC_FILE="$1"
 
 test -r "$1" || usage
 test -r "$PRP_FILE" || usage
@@ -149,25 +158,17 @@ fi; if [ -z "$TASK" ]; then
 fi
 
 # include common code base
-topdir="`dirname "$(${ABSPATH} "$SELF")"`/.."
-source "$topdir/build-aux/cclib.sh"
+topdir="`dirname "$(readlink -f "$SELF")"`/.."
+#source "$topdir/build-aux/xgcclib.sh" # defines find_*() and die() functions (NOT needed for sv-comp)
 
-# basic setup & initial checks
-export SL_PLUG='@SL_PLUG@'
-export ENABLE_LLVM='@ENABLE_LLVM@'
-if [ -z $ENABLE_LLVM ]; then
-    export GCC_HOST='@GCC_HOST@'
-    find_gcc_host
-else
-    export PASSES_LIB='@PASSES_LIB@'
-    export OPT_HOST='@OPT_HOST@'
-    export CLANG_HOST='@CLANG_HOST@'
-    find_clang_host
-    find_opt_host
-    find_plug PASSES_LIB passes Passes
-fi
+# basic setup
+#export GCC_PLUG='@GCC_PLUG@'
+export GCC_PLUG="$topdir/sl_build/libsl.so"
+export GCC_HOST='@GCC_HOST@'
 
-find_plug SL_PLUG sl Predator
+## initial checks (NOT needed for sv-comp)
+#find_gcc_host
+#find_gcc_plug sl Predator
 
 match() {
     line="$1"
@@ -192,17 +193,125 @@ fail() {
 
 report_unsafe() {
     PROPERTY="$1"
+
     # drop the remainder of the output
     cat > /dev/null
     if test -z "$PROPERTY"; then
-        report_result "FALSE" "" "$2"
+      # set property in XML trace
+      SPEC=`cat "$PRP_FILE"`
+      report_result "FALSE" "" "$2"
     else
-        report_result "FALSE" "($PROPERTY)" "$2"
+      # set property in XML trace
+      SPEC=`grep $PROPERTY $PRP_FILE`
+      report_result "FALSE" "($PROPERTY)" "$2"
     fi
+
+    # change witness XML
+    HASH=`(sha1sum "$SRC_FILE" | sed 's/ .*//')`
+
+    if test -z "$HASH"; then
+      printf "%s: error: failed to generate hash for: %s\n" "$SELF" \
+        "$SRC_FILE" >&2
+    fi
+
+    if test -z "$SPEC"; then
+      printf "%s: error: failed to generate specification from: %s\n" "$SELF" \
+        "$PRP_FILE" >&2
+    fi
+
+    sed -i s/__SRCFILEHASH__/"${HASH}"/ "$XMLTRACE"
+    sed -i s/__SPECIFICATION__/"${SPEC}"/ "$XMLTRACE"
+
     exit 0
 }
 
-parse_output() {
+report_safe() {
+#    PROPERTY="$1"
+
+    report_result "TRUE" "" "$2"
+    # generate correctness witness with all properties
+    SPEC=`cat "$PRP_FILE"`
+    HASH=`(sha1sum "$SRC_FILE" | sed 's/ .*//')`
+
+    if test -z "$HASH"; then
+      printf "%s: error: failed to generate hash for: %s\n" "$SELF" \
+        "$SRC_FILE" >&2
+    fi
+
+    if test -z "$SPEC"; then
+      printf "%s: error: failed to generate specification from: %s\n" "$SELF" \
+        "$PRP_FILE" >&2
+    fi
+
+    # graph with one start node
+    echo -e "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n\
+<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n\
+\t<key attr.name=\"originFileName\" attr.type=\"string\" for=\"edge\" id=\"originfile\">\n\
+\t\t<default>\"&lt;command-line&gt;\"</default>\n\
+\t</key>\n\
+\t<key attr.name=\"invariant\" attr.type=\"string\" for=\"node\" id=\"invariant\"/>\n\
+\t<key attr.name=\"invariant.scope\" attr.type=\"string\" for=\"node\" id=\"invariant.scope\"/>\n\
+\t<key attr.name=\"namedValue\" attr.type=\"string\" for=\"node\" id=\"named\"/>\n\
+\t<key attr.name=\"nodeType\" attr.type=\"string\" for=\"node\" id=\"nodetype\">\n\
+\t\t<default>path</default>\n\
+\t</key>\n\
+\t<key attr.name=\"isFrontierNode\" attr.type=\"boolean\" for=\"node\" id=\"frontier\">\n\
+\t\t<default>false</default>\n\
+\t</key>\n\
+\t<key attr.name=\"isViolationNode\" attr.type=\"boolean\" for=\"node\" id=\"violation\">\n\
+\t\t<default>false</default>\n\
+\t</key>\n\
+\t<key attr.name=\"isEntryNode\" attr.type=\"boolean\" for=\"node\" id=\"entry\">\n\
+\t\t<default>false</default>\n\
+\t</key>\n\
+\t<key attr.name=\"isSinkNode\" attr.type=\"boolean\" for=\"node\" id=\"sink\">\n\
+\t\t<default>false</default>\n\
+\t</key>\n\
+\t<key attr.name=\"enterLoopHead\" attr.type=\"boolean\" for=\"edge\" id=\"enterLoopHead\">\n\
+\t\t<default>false</default>\n\
+\t</key>\n\
+\t<key attr.name=\"violatedProperty\" attr.type=\"string\" for=\"node\" id=\"violatedProperty\"/>\n\
+\t<key attr.name=\"threadId\" attr.type=\"string\" for=\"edge\" id=\"threadId\"/>\n\
+\t<key attr.name=\"sourcecodeLanguage\" attr.type=\"string\" for=\"graph\" id=\"sourcecodelang\"/>\n\
+\t<key attr.name=\"programFile\" attr.type=\"string\" for=\"graph\" id=\"programfile\"/>\n\
+\t<key attr.name=\"programHash\" attr.type=\"string\" for=\"graph\" id=\"programhash\"/>\n\
+\t<key attr.name=\"specification\" attr.type=\"string\" for=\"graph\" id=\"specification\"/>\n\
+\t<key attr.name=\"memoryModel\" attr.type=\"string\" for=\"graph\" id=\"memorymodel\"/>\n\
+\t<key attr.name=\"architecture\" attr.type=\"string\" for=\"graph\" id=\"architecture\"/>\n\
+\t<key attr.name=\"producer\" attr.type=\"string\" for=\"graph\" id=\"producer\"/>\n\
+\t<key attr.name=\"sourcecode\" attr.type=\"string\" for=\"edge\" id=\"sourcecode\"/>\n\
+\t<key attr.name=\"startline\" attr.type=\"int\" for=\"edge\" id=\"startline\"/>\n\
+\t<key attr.name=\"startoffset\" attr.type=\"int\" for=\"edge\" id=\"startoffset\"/>\n\
+\t<key attr.name=\"lineColSet\" attr.type=\"string\" for=\"edge\" id=\"lineCols\"/>\n\
+\t<key attr.name=\"control\" attr.type=\"string\" for=\"edge\" id=\"control\"/>\n\
+\t<key attr.name=\"assumption\" attr.type=\"string\" for=\"edge\" id=\"assumption\"/>\n\
+\t<key attr.name=\"assumption.resultfunction\" attr.type=\"string\" for=\"edge\" id=\"assumption.resultfunction\"/>\n\
+\t<key attr.name=\"assumption.scope\" attr.type=\"string\" for=\"edge\" id=\"assumption.scope\"/>\n\
+\t<key attr.name=\"enterFunction\" attr.type=\"string\" for=\"edge\" id=\"enterFunction\"/>\n\
+\t<key attr.name=\"returnFromFunction\" attr.type=\"string\" for=\"edge\" id=\"returnFrom\"/>\n\
+\t<key attr.name=\"predecessor\" attr.type=\"string\" for=\"edge\" id=\"predecessor\"/>\n\
+\t<key attr.name=\"successor\" attr.type=\"string\" for=\"edge\" id=\"successor\"/>\n\
+\t<key attr.name=\"witness-type\" attr.type=\"string\" for=\"graph\" id=\"witness-type\"/>\n\
+\n\
+<graph edgedefault=\"directed\">\n\
+\t<data key=\"sourcecodelang\">C</data>\n\
+\t<data key=\"producer\">PredatorHP</data>\n\
+\t<data key=\"specification\">${SPEC}</data>\n\
+\t<data key=\"programhash\">${HASH}</data>\n\
+\t<data key=\"memorymodel\">precise</data>\n\
+\t<data key=\"architecture\">32bit</data>\n\
+\t<data key=\"programfile\">${SRC_FILE}</data>\n\
+\t<data key=\"witness-type\">correctness_witness</data>\n\
+\t<node id=\"A1\">\n\
+\t\t<data key=\"entry\">true</data>\n\
+\t</node>\n\
+</graph>\n\
+</graphml>" > "$XMLTRACE"
+
+    exit 0
+}
+
+parse_gcc_output() {
     ERROR_DETECTED=no
     ENDED_GRACEFULLY=no
 
@@ -224,13 +333,17 @@ parse_output() {
               fail "$line"
             fi
 
-        #elif match "$line" "$MSG_LABEL_FOUND"; then
-            # an ERROR label has been reached
         elif match "$line" "$MSG_VERIFIER_ERROR_FOUND"; then
             # an __VERIFIER_error() has been reached
             if match "$TASK" "VERIFIER_error"; then
               report_unsafe "" "$line"
             fi
+
+        #elif match "$line" "$MSG_LABEL_FOUND"; then
+        #    # an ERROR label has been reached
+        #    if match "$TASK" "VERIFIER_error"; then
+        #      report_unsafe "" "$line"
+        #    fi
 
         elif match "$line" "$MSG_DEREF_FREED" || \
              match "$line" "$MSG_DEREF_OUT" || \
@@ -276,43 +389,53 @@ parse_output() {
         elif match "$line" "$MSG_TIME_ELAPSED"; then
             # we ended up without a crash, yay!
             ENDED_GRACEFULLY=yes
+
         fi
     done
 
     if test xyes = "x$ERROR_DETECTED"; then
         fail "warning: Encountered some warnings"
     elif test xyes = "x$ENDED_GRACEFULLY"; then
-        echo TRUE
+        report_safe "$TASK" "$line"
     else
         fail "error: Predator has not finished gracefully"
     fi
 }
 
 if match "$TASK" "VERIFIER_error"; then
-#    ARGS="error_label:ERROR"
-    ARGS="verifier_error_is_error"
+  ARGS="no_error_recovery,verifier_error_is_error"
 elif match "$TASK" "memcleanup"; then
     ARGS="no_error_recovery,memleak_is_error,exit_leaks"
 elif match "$TASK" "memtrack"; then
-    ARGS="no_error_recovery,memleak_is_error"
-elif match "$TASK" "deref" || match "$TASK" "free" || match "$TASK" "overflow"; then
-    ARGS="no_error_recovery"
+  ARGS="no_error_recovery,memleak_is_error"
+elif match "$TASK" "deref" || match "$TASK" "free"; then
+  ARGS="no_error_recovery"
+elif match "$TASK" "overflow"; then
+  ARGS="no_error_recovery"
+fi
+
+if test ! x = "x$DEPTH"; then
+    ARGS="$ARGS,depth_limit:$DEPTH"
+fi
+
+if test ! x = "x$XMLTRACE"; then
+ARGS="$ARGS,xml_trace:$XMLTRACE"
 fi
 
 if [ -z $ENABLE_LLVM ]; then
-    "$GCC_HOST"                                         \
-        -fplugin="${SL_PLUG}"                           \
-        -fplugin-arg-libsl-args="$ARGS"                 \
-        -o /dev/null -O0 -S -xc "$@" 2>&1               \
-        | tee "$TRACE"                                  \
-        | parse_output
+"$GCC_HOST"                                         \
+    -fplugin="${SL_PLUG}"                           \
+    -fplugin-arg-libsl-args="$ARGS"                 \
+    -o /dev/null -O0 -S -xc "$@" 2>&1               \
+    | tee "$TRACE"                                  \
+    | parse_gcc_output
 else
     "$CLANG_HOST" -S -emit-llvm -O0 -g -o -             \
-        -Xclang -fsanitize-address-use-after-scope "$@" \
-        | "$OPT_HOST" -lowerswitch                      \
-        -load "$PASSES_LIB" -global-vars                \
-        -load "$SL_PLUG" -sl -args="$ARGS"              \
-        -o /dev/null 2>&1                               \
-        | tee "$TRACE"                                  \
-        | parse_output
+      -Xclang -fsanitize-address-use-after-scope "$@" \
+      | "$OPT_HOST" -lowerswitch                      \
+      -load "$PASSES_LIB" -global-vars                \
+      -load "$SL_PLUG" -sl -args="$ARGS"              \
+      -o /dev/null 2>&1                               \
+      | tee "$TRACE"                                  \
+      | parse_gcc_output
 fi
