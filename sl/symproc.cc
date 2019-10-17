@@ -309,6 +309,11 @@ bool SymProc::checkForInvalidDeref(TValId val, const TSizeOf sizeOfTarget)
     const TSizeRange dstSizeRange = valSizeOfTarget(sh_, val);
     const TSizeOf minDstSize = dstSizeRange.lo;
     if (sh_.valOffset(val) < 0 || minDstSize < sizeOfTarget) {
+        if (dstSizeRange.lo != dstSizeRange.hi) {
+            // HACK: dereferencing interval-size object unsupported
+            CL_WARN_MSG(lw_, "dereferencing interval-size object unsupported");
+            return true;
+        }
         // out of bounds
         reportDerefOutOfBounds(*this, val, sizeOfTarget);
         return true;
