@@ -377,6 +377,9 @@ class SymHeapCore {
         /// each symbolic heap is associated with a CodeStorage model of code
         TStorRef stor() const { return stor_; }
 
+        /// each symbolic heap is associated with its generation number
+        int generation() const { return generation_; }
+
         /// each symbolic heap is associated with a trace graph node
         Trace::Node* traceNode() const;
 
@@ -616,6 +619,7 @@ class SymHeapCore {
 
     protected:
         TStorRef stor_;
+        int generation_;        // for depth limit checking (primarily for DFS)
 
     private:
         struct Private;

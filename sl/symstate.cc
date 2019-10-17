@@ -606,6 +606,19 @@ bool SymStateMap::insert(
         const SymHeap                   &sh,
         const bool                      allowThreeWay)
 {
+#if 0
+    // moved up with CL_WARN_MSG, this can be removed after more testing
+    // do not insert if depth limit reached  (Warning: EXPERIMENTAL)
+    int limit = GlConf::data.limitDepth;
+    if(limit > 0 && sh.generation() > limit) {
+        CL_DEBUG("SymStateMap::insert() ignored - depth limit reached");
+        // TODO: mark incomplete analysis (Warning)
+        //std::cout << "Depth limit reached (" << sh.generation() << ")\n"; //FIX for check-property.sh!
+        CL_WARN_MSG(where-to-get-lineinfo?, "Depth limit reached (" << sh.generation() << ")");
+        return false;
+    }
+#endif
+
     // look for the _target_ block
     Private::BlockState &ref = d->cont[dst];
     const unsigned size = ref.state.size();

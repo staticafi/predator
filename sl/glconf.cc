@@ -52,6 +52,8 @@ Options::Options():
     stateLiveOrdering(SE_STATE_ON_THE_FLY_ORDERING),
     exitLeaks(SE_EXIT_LEAKS),
     detectContainers(false),
+    limitDepth(-1),
+    xmlTrace(""),
     fixedPoint(0)
 {
 }
@@ -94,6 +96,7 @@ void handleExitLeaks(const string &name, const string &value)
 
 void handleErrorLabel(const string &name, const string &value)
 {
+    return; // ignore error label parameter
     if (value.empty()) {
         CL_WARN("ignoring option \"" << name << "\" without a valid value");
         return;
@@ -236,10 +239,32 @@ void handleDetectContainers(const string &name, const string &value)
     handleDumpFixedPoint(name, value);
 }
 
+void handleDepthLimit(const string &name, const string &value)
+{
+    try {
+        data.limitDepth = boost::lexical_cast<int>(value);
+        // TODO: check value
+    }
+    catch (...) {
+        CL_WARN("ignoring option \"" << name << "\" with invalid value");
+    }
+}
+
+void handleXMLTrace(const string &name, const string &value)
+{
+    if (value.empty()) {
+        CL_WARN("ignoring option \"" << name << "\" without a valid value");
+        return;
+    }
+
+    data.xmlTrace = value;
+}
+
 ConfigStringParser::ConfigStringParser()
 {
     tbl_["allow_cyclic_trace_graph"]= handleAllowCyclicTraceGraph;
     tbl_["allow_three_way_join"]    = handleAllowThreeWayJoin;
+    tbl_["depth_limit"]             = handleDepthLimit;
     tbl_["dump_fixed_point"]        = handleDumpFixedPoint;
     tbl_["detect_containers"]       = handleDetectContainers;
     tbl_["error_label"]             = handleErrorLabel;
@@ -254,6 +279,7 @@ ConfigStringParser::ConfigStringParser()
     tbl_["state_live_ordering"]     = handleStateLiveOrdering;
     tbl_["track_uninit"]            = handleTrackUninit;
     tbl_["verifier_error_is_error"] = handleVerifierErrorIsError;
+    tbl_["xml_trace"]               = handleXMLTrace;
 }
 
 void ConfigStringParser::handleRawOption(const string &raw) const

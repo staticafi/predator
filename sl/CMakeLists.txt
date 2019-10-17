@@ -77,7 +77,8 @@ add_library(predator STATIC
     symstate.cc
     symtrace.cc
     symutil.cc
-    version.c)
+    version.c
+    xmltrace.cc)
 
 
 # build compiler plug-in (libsl.so/.dylib)

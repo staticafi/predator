@@ -39,6 +39,7 @@
 #include "symutil.hh"
 #include "symtrace.hh"
 #include "util.hh"
+#include "xmltrace.hh"
 
 #include <cstring>
 #include <libgen.h>
@@ -1203,6 +1204,7 @@ bool handleError(
     // print the error message
     CL_ERROR_MSG(loc, name
             << "() reached, analysis of this code path will not continue");
+    XML_ERROR_MSG(loc, name << "() reached, analysis of this code path will not continue");
 
     if (!isVerifierError)
         // print the user message

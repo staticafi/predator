@@ -26,11 +26,13 @@
 #include "symheap.hh"
 #include "symutil.hh"
 #include "util.hh"
+#include "xmltrace.hh"
 
 #include <map>
 #include <queue>
 #include <stack>
 #include <utility>
+#include <iostream>
 
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -167,9 +169,12 @@ bool SymBackTrace::printBackTrace() const
     if (ref.size() < 2)
         return false;
 
-    BOOST_FOREACH(const BtStackItem &item, ref)
+    BOOST_FOREACH(const BtStackItem &item, ref) {
         CL_NOTE_MSG(item.loc, "from call of " << nameOf(item.fnc) << "()");
-
+        //std::cout << "### " << item.loc->file << ':' << item.loc->line << "\n";
+        XML_NOTE_MSG(item.loc, "from call of " << nameOf(item.fnc) << "()");
+    }
+    XMLTraceEnd();
     return true;
 }
 

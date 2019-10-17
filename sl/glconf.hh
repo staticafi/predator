@@ -46,6 +46,8 @@ struct Options {
     int stateLiveOrdering;  ///< @copydoc config.h::SE_STATE_ON_THE_FLY_ORDERING
     bool exitLeaks;         ///< @copydoc config.h::SE_EXIT_LEAKS
     bool detectContainers;  ///< detect containers and operations over them
+    int limitDepth;         ///< @copydoc EXPERIMENTAL: limit depth of DFS
+    std::string xmlTrace;   ///< @copydoc EXPERIMENTAL: XML trace file name
     FixedPoint::StateByInsn *fixedPoint;  ///< fixed-point plotter (0 if unused)
 
     Options();

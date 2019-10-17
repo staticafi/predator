@@ -39,6 +39,7 @@
 #include "symutil.hh"
 #include "symtrace.hh"
 #include "util.hh"
+#include "xmltrace.hh"
 
 #include <stack>
 #include <stdexcept>
@@ -51,6 +52,7 @@
 #define REPORT_MEMLEAK(proc, msg) do {      \
     if (GlConf::data.memLeakIsError) {      \
         CL_ERROR_MSG((proc).lw(), msg);     \
+        XML_ERROR_MSG((proc).lw(), msg);    \
         (proc).printBackTrace(ML_ERROR);    \
     }                                       \
     else {                                  \
@@ -75,6 +77,8 @@ void SymProc::printBackTrace(EMsgLevel level, bool forcePtrace)
     }
     else if (bt_->printBackTrace())
         printMemUsage("SymBackTrace::printBackTrace");
+
+    XMLTraceEnd();
 
     // dump trace graph, or schedule and endpoint for batch trace graph dump
 #if 2 == SE_DUMP_TRACE_GRAPHS
@@ -212,6 +216,7 @@ void reportDerefOutOfBounds(
     CL_BREAK_IF(sizeOfTarget <= 0);
     CL_ERROR_MSG(loc, "dereferencing object of size " << sizeOfTarget
             << "B out of bounds");
+    XML_ERROR_MSG(loc, "dereferencing object of size " << sizeOfTarget << "B out of bounds");
 
     // what is the root actually?
     const TObjId obj = sh.objByAddr(val);
@@ -254,6 +259,7 @@ bool SymProc::checkForInvalidDeref(TValId val, const TSizeOf sizeOfTarget)
 {
     if (VAL_NULL == val) {
         CL_ERROR_MSG(lw_, "dereference of NULL value");
+        XML_ERROR_MSG(lw_, "dereference of NULL value");
         return true;
     }
 
@@ -262,6 +268,7 @@ bool SymProc::checkForInvalidDeref(TValId val, const TSizeOf sizeOfTarget)
         const TOffset off = sh_.valOffset(val);
         CL_ERROR_MSG(lw_, "dereference of NULL value with offset "
                 << off << "B");
+        XML_ERROR_MSG(lw_, "dereference of NULL value with offset " << off << "B");
 
         return true;
     }
@@ -280,6 +287,7 @@ bool SymProc::checkForInvalidDeref(TValId val, const TSizeOf sizeOfTarget)
         case VT_CUSTOM:
         case VT_UNKNOWN:
             CL_ERROR_MSG(lw_, "invalid dereference");
+            XML_ERROR_MSG(lw_, "invalid dereference");
             describeUnknownVal(*this, val, "dereference");
             return true;
 
@@ -296,10 +304,12 @@ bool SymProc::checkForInvalidDeref(TValId val, const TSizeOf sizeOfTarget)
 
             case SC_ON_STACK:
                 CL_ERROR_MSG(lw_,"dereference of non-existing non-heap object");
+                XML_ERROR_MSG(lw_,"dereference of non-existing non-heap object");
                 break;
 
             case SC_ON_HEAP:
                 CL_ERROR_MSG(lw_, "dereference of already deleted heap object");
+                XML_ERROR_MSG(lw_, "dereference of already deleted heap object");
                 break;
         }
 
@@ -689,6 +699,7 @@ TValId ptrObjectEncoderCore(
     const TSizeOf dstSize = dst.type()->size;
     if (dstSize < ptrSize) {
         CL_ERROR_MSG(loc, "not enough space to store value of a pointer");
+        XML_ERROR_MSG(loc, "not enough space to store value of a pointer");
         CL_NOTE_MSG(loc, "dstSize: " << dstSize << " B");
         CL_NOTE_MSG(loc, "ptrSize: " << ptrSize << " B");
         proc.printBackTrace(ML_ERROR);
@@ -838,6 +849,7 @@ void objSetAtomicVal(SymProc &proc, const FldHandle &lhs, TValId rhs)
 {
     if (!lhs.isValidHandle()) {
         CL_ERROR_MSG(proc.lw(), "invalid L-value");
+        XML_ERROR_MSG(proc.lw(), "invalid L-value");
         proc.printBackTrace(ML_ERROR);
         return;
     }
@@ -1375,6 +1387,7 @@ void SymExecCore::execFree(
     switch (code) {
         case VT_CUSTOM:
             CL_ERROR_MSG(lw_, fnc << " called on non-pointer value");
+            XML_ERROR_MSG(lw_, fnc << " called on non-pointer value");
             this->printBackTrace(ML_ERROR);
             return;
 
@@ -1392,6 +1405,7 @@ void SymExecCore::execFree(
                 return;
 
             CL_ERROR_MSG(lw_, "invalid " << fnc);
+            XML_ERROR_MSG(lw_, "invalid " << fnc);
             describeUnknownVal(*this, val, "free");
             this->printBackTrace(ML_ERROR);
             return;
@@ -1415,6 +1429,7 @@ void SymExecCore::execFree(
         case SC_ON_STACK:
             if (!hasValidTarget) {
                 CL_ERROR_MSG(lw_, "attempt to free a non-existing non-heap object");
+                XML_ERROR_MSG(lw_, "attempt to free a non-existing non-heap object");
                 this->printBackTrace(ML_ERROR);
                 return;
             }
@@ -1422,12 +1437,14 @@ void SymExecCore::execFree(
 
         case SC_STATIC:
             CL_ERROR_MSG(lw_, "attempt to free a non-heap object");
+            XML_ERROR_MSG(lw_, "attempt to free a non-heap object");
             this->printBackTrace(ML_ERROR);
             return;
     }
 
     if (!hasValidTarget) {
         CL_ERROR_MSG(lw_, "double free by " << fnc);
+        XML_ERROR_MSG(lw_, "double free by " << fnc);
         this->printBackTrace(ML_ERROR);
         return;
     }
@@ -1435,6 +1452,7 @@ void SymExecCore::execFree(
     const TOffset off = sh_.valOffset(val);
     if (off) {
         CL_ERROR_MSG(lw_, fnc << " called with offset " << off << "B");
+        XML_ERROR_MSG(lw_, fnc << " called with offset " << off << "B");
         this->printBackTrace(ML_ERROR);
         return;
     }
@@ -2905,6 +2923,7 @@ void SymExecCore::handleLabel(const CodeStorage::Insn &insn)
         return;
 
     CL_ERROR_MSG(lw_, "error label \"" << name << "\" has been reached");
+    XML_ERROR_MSG(lw_, "error label \"" << name << "\" has been reached");
 
     // print the backtrace and leave
     this->printBackTrace(ML_ERROR, /* forcePtrace */ true);

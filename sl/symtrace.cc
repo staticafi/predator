@@ -36,6 +36,9 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 
+#include "glconf.hh"
+#include "xmltrace.hh"
+
 namespace Trace {
 
 typedef const Node                                     *TNode;
@@ -638,6 +641,7 @@ Node* /* selected predecessor */ CloneNode::printNode() const
 Node* /* selected predecessor */ CallEntryNode::printNode() const
 {
     CL_NOTE_MSG(&insn_->loc, "from call of " << (*insn_));
+    XML_NOTE_MSG(&insn_->loc, "from call of " << (*insn_));
     return this->parent();
 }
 
@@ -670,6 +674,7 @@ Node* /* selected predecessor */ CondNode::printNode() const
         : "FALSE";
 
     CL_NOTE_MSG(&inCmp_->loc, (*inCmp_) << " ... " << action << result);
+    XML_NOTE_MSG(&inCmp_->loc, (*inCmp_) << " ... " << action << result);
     return this->parent();
 }
 

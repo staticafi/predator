@@ -21,6 +21,7 @@
 #include "config.h"
 #include "symheap.hh"
 
+#include <cl/cldebug.hh>        // cltToStream()
 #include <cl/cl_msg.hh>
 #include <cl/clutil.hh>
 #include <cl/storage.hh>
@@ -43,6 +44,7 @@
 #include <map>
 #include <set>
 #include <typeinfo>
+#include <limits>
 
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -1920,6 +1922,7 @@ bool SymHeapCore::findCoveringUniBlocks(
 
 SymHeapCore::SymHeapCore(TStorRef stor, Trace::Node *trace):
     stor_(stor),
+    generation_(0),
     d(new Private(trace))
 {
     CL_BREAK_IF(!&stor_);
@@ -1949,9 +1952,11 @@ SymHeapCore::SymHeapCore(TStorRef stor, Trace::Node *trace):
 
 SymHeapCore::SymHeapCore(const SymHeapCore &ref):
     stor_(ref.stor_),
+    generation_(ref.generation_ + 1),
     d(new Private(*ref.d))
 {
     CL_BREAK_IF(!&stor_);
+    CL_BREAK_IF(generation_ == std::numeric_limits<int>::max()); // overflow
 }
 
 SymHeapCore::~SymHeapCore()
@@ -1967,6 +1972,7 @@ SymHeapCore& SymHeapCore::operator=(const SymHeapCore &ref)
 
     delete d;
     d = new Private(*ref.d);
+    generation_ = ref.generation_;
     return *this;
 }
 
@@ -1974,6 +1980,7 @@ void SymHeapCore::swap(SymHeapCore &ref)
 {
     CL_BREAK_IF(&stor_ != &ref.stor_);
     swapValues(this->d, ref.d);
+    swapValues(generation_, ref.generation_);
 }
 
 Trace::Node* SymHeapCore::traceNode() const

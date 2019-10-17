@@ -302,6 +302,15 @@ bool isLoopClosingEdge(
 
 void SymExecEngine::updateState(SymHeap &sh, const CodeStorage::Block *ofBlock)
 {
+    // do not insert if depth limit reached  (Warning: EXPERIMENTAL)
+    int limit = GlConf::data.limitDepth;
+    if(limit > 0 && sh.generation() > limit) {
+        CL_DEBUG("SymExecEngine::updateState() - depth limit reached");
+        // TODO: mark incomplete analysis (Warning)
+        CL_WARN_MSG(lw_, "Depth limit reached (" << sh.generation() << ")");
+        return;
+    }
+
     const std::string &name = ofBlock->name();
 
     bool closingLoop = isLoopClosingEdge(/* term */ block_->back(), ofBlock);
