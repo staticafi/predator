@@ -8,6 +8,7 @@ export MSG_LABEL_FOUND=': error: error label "ERROR" has been reached'
 export MSG_VERIFIER_ERROR_FOUND=': (error|warning): __VERIFIER_error\(\) reached'
 export MSG_OUR_WARNINGS=': warning: .*\[-fplugin=libsl.so\]$'
 export MSG_TIME_ELAPSED=': note: clEasyRun\(\) took '
+export MSG_INTERVAL_REDUCE=': warning: reduce .*er bound of half-open interval'
 export MSG_UNHANDLED_CALL=': warning: ignoring call of undefined function: '
 export MSG_INT_OVERFLOW=': warning: possible .*flow of .* integer'
 export MSG_COND_JUMP_UNINIT_VALUE=': warning: conditional jump depends on uninitialized value'
@@ -271,8 +272,10 @@ parse_output() {
             # errors already reported, better to fail now
             fail "$line"
 
-        elif match "$line" "$MSG_INFLOOP"; then
-            # infinite loop does not mean FALSE, ignore them
+        elif match "$line" "$MSG_INFLOOP" || \
+             match "$line" "$MSG_INTERVAL_REDUCE"; then
+            # infinite loop does not mean FALSE
+            # interval reduce only for huters too, ignore them
             continue #why continue in elif?
 
         elif match "$line" "$MSG_OUR_WARNINGS"; then
