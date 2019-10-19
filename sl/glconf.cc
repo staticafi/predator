@@ -54,6 +54,7 @@ Options::Options():
     detectContainers(false),
     limitDepth(-1),
     xmlTrace(""),
+    splitIntervalLimit(SE_SPLIT_INTERVAL_LIMIT),
     fixedPoint(0)
 {
 }
@@ -260,6 +261,16 @@ void handleXMLTrace(const string &name, const string &value)
     data.xmlTrace = value;
 }
 
+void handleSplitIntervalLimit(const string &name, const string &value)
+{
+    try {
+        data.splitIntervalLimit = boost::lexical_cast<int>(value);
+    }
+    catch (...) {
+        CL_WARN("ignoring option \"" << name << "\" with invalid value");
+    }
+}
+
 ConfigStringParser::ConfigStringParser()
 {
     tbl_["allow_cyclic_trace_graph"]= handleAllowCyclicTraceGraph;
@@ -276,6 +287,7 @@ ConfigStringParser::ConfigStringParser()
     tbl_["no_error_recovery"]       = handleNoErrorRecovery;
     tbl_["no_plot"]                 = handleNoPlot;
     tbl_["oom"]                     = handleOOM;
+    tbl_["split_interval_limit"]    = handleSplitIntervalLimit;
     tbl_["state_live_ordering"]     = handleStateLiveOrdering;
     tbl_["track_uninit"]            = handleTrackUninit;
     tbl_["verifier_error_is_error"] = handleVerifierErrorIsError;

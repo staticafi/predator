@@ -232,6 +232,11 @@
 #define SE_INT_ARITHMETIC_LIMIT             10
 
 /**
+ * max size of the bounded interval we can split into concrete values
+ */
+#define SE_SPLIT_INTERVAL_LIMIT             300
+
+/**
  * - -1 ... never join, never check for entailment, always check for isomorphism
  * - 0 ... join states on each basic block entry
  * - 1 ... join only when traversing a loop-closing edge, entailment otherwise
@@ -304,6 +309,11 @@
  * - 3 ... track also code pointers
  */
 #define SE_TRACK_NON_POINTER_VALUES         2
+
+/**
+ * if 1, consider the order of the allocated objects [experimental]
+ */
+#define SE_OBJECTS_ORDER                    0
 
 /**
  * if 1, do not make deep copy on copy of SymHeap [experimental]
