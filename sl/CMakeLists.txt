@@ -417,7 +417,7 @@ macro(test_predator_regre name_suff ext arg1)
 endmacro(test_predator_regre)
 
 # default mode
-test_predator_regre("" "" "-fplugin-arg-libsl-args=error_label:ERROR")
+#test_predator_regre("" "" "-fplugin-arg-libsl-args=error_label:ERROR")
 
 # track_uninit mode
 test_predator_regre("-TRACK_UNINIT" ".uninit"

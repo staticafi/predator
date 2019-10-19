@@ -48,6 +48,7 @@ struct Options {
     bool detectContainers;  ///< detect containers and operations over them
     int limitDepth;         ///< @copydoc EXPERIMENTAL: limit depth of DFS
     std::string xmlTrace;   ///< @copydoc EXPERIMENTAL: XML trace file name
+    int splitIntervalLimit; ///< @copydoc EXPERIMENTAL: config.h::SE_SPLIT_INTERVAL_LIMIT
     FixedPoint::StateByInsn *fixedPoint;  ///< fixed-point plotter (0 if unused)
 
     Options();
