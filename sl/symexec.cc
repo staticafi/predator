@@ -417,10 +417,10 @@ void SymExecEngine::updateStateInBranch(
         }
 #endif
 #endif
-        // close interval - sound
-        if (IR::IntMin != rng.lo && IR::IntMax != rng.hi ) {//&&
-            //(rng.hi-rng.lo < GlConf::data.intArithmeticLimit)) {
-            // closed interval under limit SE_INT_ARITHMETIC_LIMIT
+        // bounded interval - sound
+        if (IR::IntMin != rng.lo && IR::IntMax != rng.hi &&
+            (abs(rng.hi-rng.lo) < GlConf::data.splitIntervalLimit)) {
+            // size of bounded interval under limit SE_SPLIT_INTERVAL_LIMIT
 
             CL_DEBUG("updateStateInBranch() splitting close interval <"
                       <<rng.lo<<","<<rng.hi<<">");

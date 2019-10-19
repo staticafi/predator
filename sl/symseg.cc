@@ -82,6 +82,8 @@ bool segProveNeq(const SymHeap &sh, TValId ref, TValId val)
         // values are non-equal in non-abstract world
         return true;
 
+#if SE_OBJECTS_ORDER
+    // EXPERIMENTAL: depend on the unchanged ID of the allocated objects
     const EValueTarget code1 = sh.valTarget(ref);
     const EValueTarget code2 = sh.valTarget(val);
     if (VT_OBJECT == code1 && VT_OBJECT == code2) {
@@ -94,7 +96,7 @@ bool segProveNeq(const SymHeap &sh, TValId ref, TValId val)
             // valid and invalid objects are different, if invalid was allocated after valid 
             return true;
     }
-
+#endif
 
     // having the values always in the same order leads to simpler code
     moveKnownValueToLeft(sh, ref, val);
