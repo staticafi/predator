@@ -393,8 +393,10 @@ void SymExecEngine::updateStateInBranch(
         for (int i = 1; i <= 2; ++i ) {
             op = insnCmp.operands[/* src */ i];
             valRng = proc.valFromOperand(op);
-            if (anyRangeFromVal(&rng, *sh, valRng) && !isSingular(rng)) {
-                split = true; break; // found interval
+            if (CL_OPERAND_VAR == op.code && !op.data.var->artificial) {
+                if (anyRangeFromVal(&rng, *sh, valRng) && !isSingular(rng)) {
+                    split = true; break; // found interval
+                }
             }
         }
         if (!split) goto end_split;
