@@ -418,7 +418,7 @@ parse_gcc_output() {
 }
 
 if match "$TASK" "VERIFIER_error"; then
-  ARGS="no_error_recovery,verifier_error_is_error"
+  ARGS="verifier_error_is_error"
 elif match "$TASK" "memcleanup"; then
     ARGS="no_error_recovery,memleak_is_error,exit_leaks"
 elif match "$TASK" "memtrack"; then

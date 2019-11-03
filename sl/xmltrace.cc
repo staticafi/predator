@@ -242,6 +242,12 @@ std::stack<XMLTraceItem> XMLTraceStack;
 
 // this should be called after each CL_ERROR_MSG for XML generation start
 void XMLTraceBegin(const char *file, int line, std::string msg) {
+  if (!XMLTraceStack.empty()) // enable error recovery
+    while(XMLTraceFlag) {
+      XMLTraceStack.pop();
+      --XMLTraceFlag;
+    }
+
   if(XMLTraceFlag)
     return;
   if(GlConf::data.xmlTrace.empty())     // no XML file parameter specified

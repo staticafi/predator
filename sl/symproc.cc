@@ -74,11 +74,10 @@ void SymProc::printBackTrace(EMsgLevel level, bool forcePtrace)
     if (forcePtrace || !GlConf::data.errorRecoveryMode) {
         Trace::printTrace(trMsg);
         printMemUsage("Trace::printTrace");
+        XMLTraceEnd();
     }
     else if (bt_->printBackTrace())
         printMemUsage("SymBackTrace::printBackTrace");
-
-    XMLTraceEnd();
 
     // dump trace graph, or schedule and endpoint for batch trace graph dump
 #if 2 == SE_DUMP_TRACE_GRAPHS

@@ -1188,7 +1188,14 @@ bool handleError(
         printUserMessage(core, opList[/* msg */ 2]);
 
     // print backtrace
-    core.printBackTrace(ML_ERROR);
+    if (isVerifierError && GlConf::data.verifierErrorIsError) {
+        // print the backtrace and leave
+        core.printBackTrace(ML_ERROR, /* forcePtrace */ true);
+        throw std::runtime_error("__VERIFIER_error() has been reached");
+    }
+    else
+        core.printBackTrace(ML_ERROR);
+
     return true;
 }
 
