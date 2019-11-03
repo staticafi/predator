@@ -954,6 +954,9 @@ bool handleNondetInt(
     CL_DEBUG_MSG(&insn.loc, "executing " << name << "()");
     TValId val;
 
+    const struct cl_operand &opDst = opList[0];
+    const FldHandle fldDst = core.fldByOperand(opDst);
+
     static const char namePrefixUnsigned[] = "__VERIFIER_nondet_u";
     static const size_t namePrefixLength = sizeof(namePrefixUnsigned) - 1U;
     std::string namePrefix(name);
@@ -962,11 +965,42 @@ bool handleNondetInt(
 
     if (std::string(namePrefixUnsigned) == namePrefix) {
         // an unsigned value
-        const IR::Range unsignedRng = {
+        IR::Range unsignedRng = {
             /* lo        */ 0,
             /* hi        */ IR::IntMax,
             /* alignment */ IR::Int1
         };
+
+#if 2 == SE_BLOCK_SCHEDULER_KIND
+#if SE_JOIN_ON_LOOP_EDGES_ONLY < 0
+// DFS without join
+        CL_WARN("reduce upper bound of half-open interval to <0,2>");
+
+        unsignedRng.hi = 2;
+        for (; unsignedRng.lo < 2; ++unsignedRng.lo) {
+            unsignedRng.hi = unsignedRng.lo; // singleton
+            IR::adjustAlignment(&unsignedRng);
+            // clone heap for each num of range
+            CL_DEBUG(name<<"() is cloning heap for value "
+                     << unsignedRng.lo << " of close interval");
+
+            SymHeap shDup(sh);
+            SymExecCore coreDup(shDup, core.bt(), core.params());
+            coreDup.setLocation(core.lw());
+            const CustomValue cv(unsignedRng);
+            val = shDup.valWrapCustom(cv);
+            const FldHandle fldDup(shDup, fldDst);
+            core.setValueOf(fldDup, val);
+            Trace::waiveCloneOperation(shDup);
+            coreDup.killInsn(insn);
+            dst.insert(shDup);
+        }
+        unsignedRng.hi = unsignedRng.lo;
+        CL_DEBUG(name<<"() has actual heap for value "
+                 << unsignedRng.lo <<" of close interval");
+#endif
+#endif
+
         const CustomValue cv(unsignedRng);
         val = sh.valWrapCustom(cv);
     } else { // an unknown value
@@ -974,8 +1008,6 @@ bool handleNondetInt(
     }
 
     // set the returned value to a new value
-    const struct cl_operand &opDst = opList[0];
-    const FldHandle fldDst = core.fldByOperand(opDst);
     core.setValueOf(fldDst, val);
 
     // insert the resulting heap
