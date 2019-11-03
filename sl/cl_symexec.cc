@@ -137,6 +137,29 @@ void launchSymExec(const CodeStorage::Storage &stor)
 {
     using namespace CodeStorage;
 
+    // HACK: look for complex types CL_TYPE_{PTR,STRUCT,UNION,ARRAY,STRING}
+    // sound for memsafety EXPERIMENTAL
+    const TypeDb &types = stor.types;
+    bool complexType = false;
+    for (auto& t : types) {
+        switch (t->code) {
+            case CL_TYPE_PTR:
+            case CL_TYPE_STRUCT:
+            case CL_TYPE_UNION:
+            case CL_TYPE_ARRAY:
+            case CL_TYPE_STRING:
+                complexType = true;
+                break;
+
+            default:
+                break;
+        }
+    }
+    if (!complexType && !GlConf::data.verifierErrorIsError) {
+        CL_NOTE("program without complex types, assume memory safety");
+        return;
+    }
+
     // look for main() by name
     CL_DEBUG("looking for 'main()' at gl scope...");
     const NameDb::TNameMap &glNames = stor.fncNames.glNames;
