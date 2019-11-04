@@ -65,38 +65,6 @@ bool numFromVal(IR::TInt *pDst, const SymHeapCore &sh, const TValId val)
     return true;
 }
 
-int numOrRngFromVal(IR::TInt *pDst, const SymHeapCore &sh, const TValId val)
-{
-    switch (val) {
-        case VAL_NULL:
-            *pDst = 0L;
-            return 1;
-
-        case VAL_TRUE:
-            *pDst = 1L;
-            return 1;
-
-        default:
-            if (VT_CUSTOM == sh.valTarget(val))
-                break;
-
-            // not a custom value, which integral constants are supposed to be
-            return 0;
-    }
-
-    const CustomValue cv = sh.valUnwrapCustom(val);
-    if (CV_INT_RANGE != cv.code())
-        return 0;
-
-    const IR::Range &rng = cv.rng();
-    if (!isSingular(rng))
-        // we are asked to return a scalar, but only integral range is available
-        return 2;
-
-    *pDst = rng.lo;
-    return 1;
-}
-
 bool rngFromVal(IR::Range *pDst, const SymHeapCore &sh, const TValId val)
 {
     IR::TInt num;
