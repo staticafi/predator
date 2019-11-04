@@ -3653,7 +3653,7 @@ TValId SymHeapCore::valCreate(EValueTarget code, EValueOrigin origin)
 
         case VT_RANGE:
             // VT_RANGE pointing to a freed object is replaced by VT_UNKNOWN
-            //code = VT_UNKNOWN;
+            code = VT_UNKNOWN;
             // fall through!
 
         case VT_UNKNOWN:
