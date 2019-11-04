@@ -409,13 +409,13 @@ void SymExecEngine::updateStateInBranch(
         if (IR::IntMin != rng.lo && IR::IntMax == rng.hi ) {
             // HACK: half-open interval <x,inf) to <x,x+2> - unsound for proof EXPERIMENTAL
             rng.hi = rng.lo+2;
-            CL_WARN("reduce upper bound of half-open interval to <"
-                     <<rng.lo<<","<<rng.hi<<">");
+            CL_WARN_MSG(lw_, "reduce upper bound of half-open interval to <"
+                             <<rng.lo<<","<<rng.hi<<">");
         } else if (IR::IntMin == rng.lo && IR::IntMax != rng.hi ) {
             // HACK: half-open interval (-inf,x> to <x-2,x> - unsound for proof EXPERIMENTAL
             rng.lo = rng.hi-2;
-            CL_WARN("reduce lower bound of half-open interval to <"
-                     <<rng.lo<<","<<rng.hi<<">");
+            CL_WARN_MSG(lw_, "reduce lower bound of half-open interval to <"
+                             <<rng.lo<<","<<rng.hi<<">");
         }
 #endif
 #endif
@@ -424,8 +424,8 @@ void SymExecEngine::updateStateInBranch(
             (abs(rng.hi-rng.lo) < GlConf::data.splitIntervalLimit)) {
             // size of bounded interval under limit SE_SPLIT_INTERVAL_LIMIT
 
-            CL_DEBUG("updateStateInBranch() splitting close interval <"
-                      <<rng.lo<<","<<rng.hi<<">");
+            CL_DEBUG_MSG(lw_, "updateStateInBranch() splitting close interval <"
+                              <<rng.lo<<","<<rng.hi<<">");
             split = true;
 
             IR::TInt max = rng.hi;
@@ -433,8 +433,8 @@ void SymExecEngine::updateStateInBranch(
                 rng.hi = rng.lo; // singleton
                 IR::adjustAlignment(&rng);
                 // clone heap for each num of range
-                CL_DEBUG("updateStateInBranch() is cloning heap for value "
-                          << rng.lo << " of close interval");
+                CL_DEBUG_MSG(lw_, "updateStateInBranch() is cloning heap for value "
+                                  << rng.lo << " of close interval");
                 SymHeap shDup(*sh);
                 shDup.valRestrictRange(valRng, rng);
                 Trace::waiveCloneOperation(shDup);
