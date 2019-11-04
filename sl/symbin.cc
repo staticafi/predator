@@ -944,14 +944,15 @@ bool handleNondetInt(
         const CodeStorage::Insn                     &insn,
         const char                                  *name)
 {
+    const TLoc loc = &insn.loc;
     const CodeStorage::TOperandList &opList = insn.operands;
     if (2 != opList.size()) {
-        emitPrototypeError(&insn.loc, name);
+        emitPrototypeError(loc, name);
         return false;
     }
 
     SymHeap &sh = core.sh();
-    CL_DEBUG_MSG(&insn.loc, "executing " << name << "()");
+    CL_DEBUG_MSG(loc, "executing " << name << "()");
     TValId val;
 
     const struct cl_operand &opDst = opList[0];
@@ -974,15 +975,15 @@ bool handleNondetInt(
 #if 2 == SE_BLOCK_SCHEDULER_KIND
 #if SE_JOIN_ON_LOOP_EDGES_ONLY < 0
 // DFS without join
-        CL_WARN("reduce upper bound of half-open interval to <0,2>");
+        CL_WARN_MSG(loc, "reduce upper bound of half-open interval to <0,2>");
 
         unsignedRng.hi = 2;
         for (; unsignedRng.lo < 2; ++unsignedRng.lo) {
             unsignedRng.hi = unsignedRng.lo; // singleton
             IR::adjustAlignment(&unsignedRng);
             // clone heap for each num of range
-            CL_DEBUG(name<<"() is cloning heap for value "
-                     << unsignedRng.lo << " of close interval");
+            CL_DEBUG_MSG(loc, name<<"() is cloning heap for value "
+                              << unsignedRng.lo << " of close interval");
 
             SymHeap shDup(sh);
             SymExecCore coreDup(shDup, core.bt(), core.params());
@@ -996,8 +997,8 @@ bool handleNondetInt(
             dst.insert(shDup);
         }
         unsignedRng.hi = unsignedRng.lo;
-        CL_DEBUG(name<<"() has actual heap for value "
-                 << unsignedRng.lo <<" of close interval");
+        CL_DEBUG_MSG(loc, name<<"() has actual heap for value "
+                          << unsignedRng.lo <<" of close interval");
 #endif
 #endif
 
