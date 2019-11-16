@@ -27,5 +27,5 @@ void XMLTraceEnd() ;
     std::string str;                                    \
     std::stringstream s(str);                                      \
     s << b;                                              \
-    XMLTraceBegin("",-1, str);      \
+    XMLTraceBegin(NULL,-1, str);      \
 }while(0)
