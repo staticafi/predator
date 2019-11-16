@@ -23,3 +23,9 @@ void XMLTraceEnd() ;
     XMLTraceNode((a)->file,(a)->line, str);      \
 }while(0)
 
+#define XML_ERROR_MEMLEAK_MSG(b) do { \
+    std::string str;                                    \
+    std::stringstream s(str);                                      \
+    s << b;                                              \
+    XMLTraceBegin("",-1, str);      \
+}while(0)
