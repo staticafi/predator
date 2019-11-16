@@ -234,7 +234,7 @@
 /**
  * the highest integral number we can count to (only partial implementation atm)
  */
-#define SE_INT_ARITHMETIC_LIMIT             10
+#define SE_INT_ARITHMETIC_LIMIT             32
 
 /**
  * max size of the bounded interval we can split into concrete values
