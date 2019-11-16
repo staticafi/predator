@@ -206,6 +206,7 @@ fail() {
 report_unsafe() {
     if test xyes = "x$OVERAPPROX"; then
         fail "warning: maybe false alarm"
+    fi
 
     PROPERTY="$1"
     # drop the remainder of the output
