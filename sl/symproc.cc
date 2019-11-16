@@ -52,7 +52,7 @@
 #define REPORT_MEMLEAK(proc, msg) do {      \
     if (GlConf::data.memLeakIsError) {      \
         CL_ERROR_MSG((proc).lw(), msg);     \
-        XML_ERROR_MSG((proc).lw(), msg);    \
+        XML_ERROR_MEMLEAK_MSG(msg);         \
         (proc).printBackTrace(ML_ERROR);    \
     }                                       \
     else {                                  \

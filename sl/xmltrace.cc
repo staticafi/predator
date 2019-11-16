@@ -304,9 +304,11 @@ void XMLTraceEnd() {
   i = XMLTraceStack.top();
   XMLTraceStack.pop();
   //xmlfile << "TRACE-ERROR: " << i.file << "  " << i.line << "\n";
-  printNode(out, nodeNumber);
-  printEdge(out, i.line, nodeNumber);
-  ++nodeNumber;
+  if (i.line>0) {
+    printNode(out, nodeNumber);
+    printEdge(out, i.line, nodeNumber);
+    ++nodeNumber;
+  }
 
   // XML footer
   printEnd(out, nodeNumber);
