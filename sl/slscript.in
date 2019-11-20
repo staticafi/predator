@@ -35,22 +35,22 @@ seek_input_file "$@" || usage
 
 # include common code base
 topdir="`dirname "$(${ABSPATH} "$SELF")"`/.."
-source "$topdir/build-aux/cclib.sh"
+source "$topdir/predator/cclib.sh"
 
 # basic setup & initial checks
 export SINK="/dev/null"
 export COMPILE_OPTS="-S -O0 -I$topdir/include/predator-builtins -DPREDATOR"
-export SL_PLUG='@SL_PLUG@'
+export SL_PLUG="$topdir/predator/lib/libsl.so"
 export ENABLE_LLVM='@ENABLE_LLVM@'
 if [ -z $ENABLE_LLVM ]; then
     export PLUGPATTERN="-fplugin=libsl\.so"
-    export GCC_HOST='@GCC_HOST@'
+    export GCC_HOST='gcc'
     find_gcc_host
 else
     export PLUGPATTERN="-sl"
-    export PASSES_LIB='@PASSES_LIB@'
-    export OPT_HOST='@OPT_HOST@'
-    export CLANG_HOST='@CLANG_HOST@'
+    export PASSES_LIB="$topdir/predator/lib/libpasses.so"
+    export OPT_HOST='opt'
+    export CLANG_HOST='clang'
     find_clang_host
     find_opt_host
     find_plug PASSES_LIB passes Passes
