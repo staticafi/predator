@@ -35,7 +35,11 @@ seek_input_file "$@" || usage
 
 # include common code base
 topdir="`dirname "$(${ABSPATH} "$SELF")"`/.."
-source "$topdir/predator/cclib.sh"
+CCLIB="$topdir/build-aux/cclib.sh"
+if [ ! -f "$CCLIB" ]; then
+	CCLIB="$topdir/predator/cclib.sh"
+fi
+source $CCLIB
 
 # basic setup & initial checks
 export SINK="/dev/null"
