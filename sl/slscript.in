@@ -42,9 +42,10 @@ fi
 source $CCLIB
 
 # basic setup & initial checks
+export LD_LIBRARY_PATH="$topdir/predator/lib:$LD_LIBRARY_PATH"
 export SINK="/dev/null"
 export COMPILE_OPTS="-S -O0 -I$topdir/include/predator-builtins -DPREDATOR"
-export SL_PLUG="$topdir/predator/lib/libsl.so"
+export SL_PLUG="libsl.so"
 export ENABLE_LLVM='@ENABLE_LLVM@'
 if [ -z $ENABLE_LLVM ]; then
     export PLUGPATTERN="-fplugin=libsl\.so"
@@ -52,7 +53,7 @@ if [ -z $ENABLE_LLVM ]; then
     find_gcc_host
 else
     export PLUGPATTERN="-sl"
-    export PASSES_LIB="$topdir/predator/lib/libpasses.so"
+    export PASSES_LIB="libpasses.so"
     export OPT_HOST='opt'
     export CLANG_HOST='clang'
     find_clang_host

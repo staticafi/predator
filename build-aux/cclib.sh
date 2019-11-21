@@ -45,6 +45,11 @@ find_opt_host() {
 }
 
 find_plug() {
-    test -r "${!1}" || eval $1="$topdir/${2}_build/lib${2}.so"
-    test -r "${!1}" || die "$3 plug-in not found: ${!1}"
+    for P in $(echo $LD_LIBRARY_PATH | tr ":" "\n"); do
+	if [ -r "$P/lib${2}.so" ]; then
+		return 0
+	fi
+    done
+
+    die "$3 plug-in not found: ${!1}"
 }
