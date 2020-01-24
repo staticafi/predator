@@ -113,7 +113,7 @@ const std::string START       = "<?xml version=\"1.0\" encoding=\"UTF-8\" standa
 \t<data key=\"specification\">__SPECIFICATION__</data>\n\
 \t<data key=\"programhash\">__SRCFILEHASH__</data>\n\
 \t<data key=\"memorymodel\">precise</data>\n\
-\t<data key=\"architecture\">32bit</data>\n";
+\t<data key=\"architecture\">__ARCHITECTURE__</data>\n";
 
 
 const std::string END               = "</graph>\n</graphml>";
@@ -194,8 +194,8 @@ void printNode(std::ostream&  out, const int nodeNumber)
 
 
 void SVTraceLite::printTrace(
-                        const std::vector<const CodeStorage::Insn*>&   instrs,
-                        std::ostream&                                  out)
+                        const std::vector<const CodeStorage::Insn*>&   /*instrs*/,
+                        std::ostream&                                  /*out*/)
 {
 #if 0   // removed
         printStart(out);

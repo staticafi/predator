@@ -106,6 +106,7 @@ PRP_FILE=
 DEPTH=""
 XMLTRACE=""
 SRC_FILE=
+ARCH=
 
 # write trace to stderr by default
 TRACE="/dev/fd/2"
@@ -117,7 +118,7 @@ fi
 
 eval set -- $ARGS
 
-while true; do
+while [ $# -gt 0 ]; do
   case "$1" in
     -p|--propertyfile)
       PRP_FILE="$2"; shift 2;;
@@ -130,13 +131,17 @@ while true; do
     -v|--verbose)
       export VERBOSE="yes"; shift;;
     --)
-      shift; break;;
+      SRC_FILE="$2"; shift 2; CFLAGS="$@";;
+    -m32)
+      ARCH="32"; break;;
+    -m64)
+      ARCH="64"; break;;
+    *)
+      shift;;
   esac
 done
 
-SRC_FILE="$1"
-
-test -r "$1" || usage
+test -r "$SRC_FILE" || usage
 test -r "$PRP_FILE" || usage
 
 # classify the property to be verified
@@ -223,6 +228,7 @@ report_unsafe() {
 
     sed -i s/__SRCFILEHASH__/"${HASH}"/ "$XMLTRACE"
     sed -i s/__SPECIFICATION__/"${SPEC}"/ "$XMLTRACE"
+    sed -i s/__ARCHITECTURE__/"${ARCH}bit"/ "$XMLTRACE"
 
     exit 0
 }
@@ -301,7 +307,7 @@ report_safe() {
 \t<data key=\"specification\">${SPEC}</data>\n\
 \t<data key=\"programhash\">${HASH}</data>\n\
 \t<data key=\"memorymodel\">precise</data>\n\
-\t<data key=\"architecture\">32bit</data>\n\
+\t<data key=\"architecture\">${ARCH}bit</data>\n\
 \t<data key=\"programfile\">${SRC_FILE}</data>\n\
 \t<data key=\"witness-type\">correctness_witness</data>\n\
 \t<node id=\"A1\">\n\
@@ -432,19 +438,19 @@ ARGS="$ARGS,xml_trace:$XMLTRACE"
 fi
 
 if [ -z $ENABLE_LLVM ]; then
-"$GCC_HOST"                                         \
-    -fplugin="${SL_PLUG}"                           \
-    -fplugin-arg-libsl-args="$ARGS"                 \
-    -o /dev/null -O0 -S -xc "$@" 2>&1               \
-    | tee "$TRACE"                                  \
+"$GCC_HOST"                                             \
+    -fplugin="${GCC_PLUG}"                              \
+    -fplugin-arg-libsl-args="$ARGS"                     \
+    -o /dev/null -O0 -S -xc "$SRC_FILE" $CFLAGS 2>&1    \
+    | tee "$TRACE"                                      \
     | parse_gcc_output
 else
-    "$CLANG_HOST" -S -emit-llvm -O0 -g -o -             \
-      -Xclang -fsanitize-address-use-after-scope "$@" \
-      | "$OPT_HOST" -lowerswitch                      \
-      -load "$PASSES_LIB" -global-vars                \
-      -load "$SL_PLUG" -sl -args="$ARGS"              \
-      -o /dev/null 2>&1                               \
-      | tee "$TRACE"                                  \
-      | parse_gcc_output
+"$CLANG_HOST" -S -emit-llvm -O0 -g -o -             \
+  -Xclang -fsanitize-address-use-after-scope "$@" \
+  | "$OPT_HOST" -lowerswitch                      \
+  -load "$PASSES_LIB" -global-vars                \
+  -load "$SL_PLUG" -sl -args="$ARGS"              \
+  -o /dev/null 2>&1                               \
+  | tee "$TRACE"                                  \
+  | parse_gcc_output
 fi
