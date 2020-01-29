@@ -1307,6 +1307,8 @@ bool CLPass::handleOperand(Value *v, struct cl_operand *clo) {
                                       cast<User>(v)->getOperand(0)))->getInitializer()),
                                     clo);
                 clo->type = handleType(v->getType());
+            } else if (vi->isCast()) {
+                handleOperand(stripCasts(vi), clo);
             } else {                      // constant expression
                 CL_DEBUG3("CONSTANT EXPR\n");
                 handleInstruction(vi); // recursion
@@ -2303,6 +2305,16 @@ void CLPass::handleLifetimeIntrinsic(Instruction *I, bool start) {
         freeAccessor(src.accessor);
         CL_DEBUG("clobber from llvm built-in function llvm.lifetime.end.*()");
     }
+}
+
+Value* CLPass::stripCasts(Instruction *I) {
+    Value *result = I;
+
+    while (auto *I = dyn_cast_or_null<CastInst>(result)) {
+        result = I->getOperand(0);
+    }
+
+    return result;
 }
 
 /// last function, clean up after pass, set CL on valid and setup exit code

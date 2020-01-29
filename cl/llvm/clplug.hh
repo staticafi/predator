@@ -175,6 +175,8 @@ struct CLPass : public ModulePass {
         struct cl_operand *insertOffsetAcc(Value *, struct cl_operand *);
         void handleFncOperand(Function *, struct cl_operand *);
 
+        Value *stripCasts(Instruction *);
+
         /* Constants and Variables */
         bool handleBasicConstant(Value *, struct cl_operand *);
         bool isStringLiteral(Instruction *);
