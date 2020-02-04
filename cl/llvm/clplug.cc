@@ -1503,7 +1503,23 @@ void CLPass::handleAllocaInstruction(AllocaInst *I) {
 
     if (I->isArrayAllocation()) {
         handleOperand(I->getArraySize(), &size);
-        size.data.cst.data.cst_int.value *= allocated->size;
+
+        if (!isa<Constant>(I->getArraySize())) {
+            struct cl_operand typeSize;
+            getIntOperand(allocated->size, &typeSize);
+
+            struct cl_insn mult;
+            mult.code = CL_INSN_BINOP;
+            mult.data.insn_binop.code = CL_BINOP_MULT;
+            mult.data.insn_binop.src1 = &typeSize;
+            mult.data.insn_binop.src2 = &size;
+            mult.data.insn_binop.dst = &size;
+            cl->insn(cl, &mult);
+
+        } else {
+            // this is just an optimization
+            size.data.cst.data.cst_int.value *= allocated->size;
+        }
     } else {
         getIntOperand(allocated->size, &size);
     }
