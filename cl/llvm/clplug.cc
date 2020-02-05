@@ -1519,6 +1519,7 @@ void CLPass::handleAllocaInstruction(AllocaInst *I) {
             mult.data.insn_binop.src2 = &size;
             mult.data.insn_binop.dst = &size;
             cl->insn(cl, &mult);
+            size.code = CL_OPERAND_VAR;
 
         } else {
             // this is just an optimization
