@@ -1308,7 +1308,11 @@ bool CLPass::handleOperand(Value *v, struct cl_operand *clo) {
                                     clo);
                 clo->type = handleType(v->getType());
             } else if (vi->isCast()) {
-                handleOperand(stripCasts(vi), clo);
+                CastInst* castInst = cast<CastInst>(v);
+                auto* src = castInst->getSrcTy();
+                auto* dst = castInst->getDestTy();
+
+                handleCastOperand(vi, clo);
             } else {                      // constant expression
                 CL_DEBUG3("CONSTANT EXPR\n");
                 handleInstruction(vi); // recursion
@@ -1997,8 +2001,7 @@ bool CLPass::handleCastOperand(Value *v, struct cl_operand *src) {
     bool notEmptyAcc = handleOperand(I->getOperand(0), src);
 
     if (src->type->code == CL_TYPE_FNC) {
-        CL_ERROR("unsupport cast from function type");
-        return false;
+        return handleOperand(stripCasts(I), src);
     }
 
     struct cl_type *resultType = handleType(I->getType());
