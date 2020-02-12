@@ -51,7 +51,7 @@ endif()
 
 if(ENABLE_LLVM)
     # libclllvm.a
-    add_library(clllvm STATIC llvm/clplug.cc)
+    add_library(clllvm STATIC llvm/clplug.cc llvm/constgep.cc)
 	if(NOT LLVM_ENABLE_RTTI)
 		target_compile_options(clllvm PUBLIC "-fno-rtti")
 	endif()

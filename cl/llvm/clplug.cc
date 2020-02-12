@@ -29,6 +29,7 @@ extern "C" {
 #include <cl/cldebug.hh>
 #include <cl/cl_msg.hh>
 #include "clplug.hh"
+#include "constgep.hh"
 
 #include "llvm/Config/llvm-config.h"
 
@@ -477,7 +478,8 @@ bool CLPass::runOnModule(Module &M) {
         CL_DEBUG("pass analyzes Function " << F.getName().str() << "()");
 
         if (F.isDeclaration()) continue;
-            handleFunction(&F); // open function
+        runConstgep(F);
+        handleFunction(&F); // open function
 
         for (auto& BB : F)
         { // basic blocks
