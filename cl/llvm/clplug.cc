@@ -190,6 +190,89 @@ static cl::opt<int> CLVerbose("verbose",
         cl::value_desc("uint"),
         cl::init(0), cl::cat(CLOptionCategory));
 
+namespace {
+struct FixDecl {
+    Type *tryNominate(Function &func) {
+        Type *newType = nullptr;
+
+        if (!func.isDeclaration()) return nullptr;
+
+        for (auto *user : func.users()) {
+            auto *CE = dyn_cast_or_null<ConstantExpr>(user);
+            if (!CE) {
+                return nullptr;
+            }
+
+            if (!CE->isCast()) {
+                return nullptr;
+            }
+
+            if (!(CE->getType()->isPointerTy() &&
+                  CE->getType()->getPointerElementType()->isFunctionTy())) {
+                return nullptr;
+            }
+
+            for (auto *ceUser : CE->users()) {
+                if (!isa<CallInst>(ceUser)) {
+                    return nullptr;
+                }
+            }
+
+            if (newType) {
+                if (newType != CE->getType()->getPointerElementType()) {
+                    return nullptr;
+                }
+            } else {
+                newType = CE->getType()->getPointerElementType();
+            }
+        }
+
+        return newType;
+    }
+
+    bool runOnModule(Module &M) {
+        std::vector<std::pair<Function *, Type *>> candidates;
+
+        for (Function &func : M) {
+            Type *newType = tryNominate(func);
+
+            if (newType) candidates.push_back(std::make_pair(&func, newType));
+        }
+
+        for (auto &pair : candidates) {
+            auto *func = pair.first;
+            auto name = func->getName().str();
+            auto *type = dyn_cast<FunctionType>(pair.second);
+
+            auto replacement = dyn_cast<Function>(M.getOrInsertFunction(
+                name + "_nominated_replacement_", func->getAttributes(),
+                type->getReturnType()));
+
+            std::vector<CallInst *> calls;
+            for (auto *user : func->users()) {
+                for (auto *callInst : user->users()) {
+                    auto *call = dyn_cast<CallInst>(callInst);
+                    // can't modify call here, because that invalidates
+                    // func->users
+                    calls.push_back(call);
+                }
+            }
+
+            for (auto *call : calls) {
+                call->setCalledFunction(replacement);
+            }
+
+            errs() << "re-nominate " << name << '\n';
+
+            func->eraseFromParent();
+            replacement->setName(std::move(name));
+        }
+
+        return false;
+    }
+
+};  // end of struct
+}
 
 /// just simple text, if verbose=3
 #define CL_DEBUG3(toStream) do {     \
@@ -443,6 +526,8 @@ bool CLPass::doInitialization(Module &) {
 /// Analysis of source file as Module
 /// return true, if the module was modified (never)
 bool CLPass::runOnModule(Module &M) {
+    FixDecl fixDecl;
+    fixDecl.runOnModule(M);
 
     if (CLVerbose > 2)
         M.print(errs(), nullptr);
