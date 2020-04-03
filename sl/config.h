@@ -56,7 +56,7 @@
 /**
  * if 1, print message when comparing overlapping ranges
  */
-#define DEBUG_SE_CMP_INT_RANGES             0
+#define DEBUG_SE_CMP_INT_RANGES             1
 
 /**
  * if 1, plot each abstraction/concretization step to a separate heap graph
@@ -131,7 +131,7 @@
  * - 2 ... also when joining states if the three-way join is considered useful
  * - 3 ... do not restrict the usage of three-way join at the level of symjoin
  */
-#define SE_ALLOW_THREE_WAY_JOIN             2
+#define SE_ALLOW_THREE_WAY_JOIN             0
 
 /**
  * if 1, assume that the contents of static data is initialized on first access
@@ -181,17 +181,17 @@
 /**
  * if 1, do not use DLS (Doubly-linked List Segment) abstraction
  */
-#define SE_DISABLE_DLS                      0
+#define SE_DISABLE_DLS                      1
 
 /**
  * if 1, do not use SLS (Singly-linked List Segment) abstraction
  */
-#define SE_DISABLE_SLS                      0
+#define SE_DISABLE_SLS                      1
 
 /**
  * if 1, do not use the @b symcut module at all
  */
-#define SE_DISABLE_SYMCUT                   0
+#define SE_DISABLE_SYMCUT                   1
 
 /**
  * - 0 ... do not dump trace graphs unless explicitly asked to do so
@@ -211,7 +211,7 @@
  * - 1 ... call cache enabled, use graph isomorphism for lookup (hungry on mem)
  * - 2 ... call cache enabled, use join operator for lookup [experimental]
  */
-#define SE_ENABLE_CALL_CACHE                1
+#define SE_ENABLE_CALL_CACHE                0
 
 /**
  * - 0 no error recovery, stop the analysis as soon as an error is detected
@@ -234,7 +234,7 @@
 /**
  * the highest integral number we can count to (only partial implementation atm)
  */
-#define SE_INT_ARITHMETIC_LIMIT             10
+#define SE_INT_ARITHMETIC_LIMIT             32
 
 /**
  * max size of the bounded interval we can split into concrete values
@@ -248,7 +248,7 @@
  * - 2 ... join only when traversing a loop-closing edge, isomorphism otherwise
  * - 3 ... same as 2 but skips the isomorphism check when considered redundant
  */
-#define SE_JOIN_ON_LOOP_EDGES_ONLY          3
+#define SE_JOIN_ON_LOOP_EDGES_ONLY          -1
 
 /**
  * maximal call depth
@@ -318,7 +318,7 @@
 /**
  * if 1, consider the order of the allocated objects [experimental]
  */
-#define SE_OBJECTS_ORDER                    0
+#define SE_OBJECTS_ORDER                    1
 
 /**
  * if 1, do not make deep copy on copy of SymHeap [experimental]
@@ -333,7 +333,7 @@
 /**
  * if 1, prevent collisions on entity IDs with descendants heaps
  */
-#define SH_PREVENT_AMBIGUOUS_ENT_ID         1
+#define SH_PREVENT_AMBIGUOUS_ENT_ID         0
 
 /**
  * if more than zero, jump to debugger as soon as N graph of the same name has
