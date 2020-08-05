@@ -244,9 +244,11 @@ report_unsafe() {
         "$PRP_FILE" >&2
     fi
 
-    sed -i s/__SRCFILEHASH__/"${HASH}"/ "$XMLTRACE"
-    sed -i s/__SPECIFICATION__/"${SPEC}"/ "$XMLTRACE"
-    sed -i s/__ARCHITECTURE__/"${ARCH}bit"/ "$XMLTRACE"
+    if test -n "$XMLTRACE"; then
+      sed -i '' s/__SRCFILEHASH__/"${HASH}"/ "$XMLTRACE"
+      sed -i '' s/__SPECIFICATION__/"${SPEC}"/ "$XMLTRACE"
+      sed -i '' s/__ARCHITECTURE__/"${ARCH}bit"/ "$XMLTRACE"
+    fi
 
     exit 0
 }
@@ -270,6 +272,7 @@ report_safe() {
     fi
 
     # graph with one start node
+    if test -n "$XMLTRACE"; then
     echo -e "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n\
 <graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n\
 \t<key attr.name=\"originFileName\" attr.type=\"string\" for=\"edge\" id=\"originfile\">\n\
@@ -333,6 +336,7 @@ report_safe() {
 \t</node>\n\
 </graph>\n\
 </graphml>" > "$XMLTRACE"
+    fi
 
     exit 0
 }
