@@ -275,13 +275,7 @@ bool SymProc::checkForInvalidDeref(TValId val, const TSizeOf sizeOfTarget)
     const EValueTarget code = sh_.valTarget(val);
     switch (code) {
         case VT_RANGE:
-            IR::Range rng;
-            anyRangeFromVal(&rng, sh_, val);
-            if (!IR::isSingular(rng)) {
-                // HACK: dereferencing interval-size object unsupported
-                CL_WARN_MSG(lw_, "interval dereference of object unsupported");
-                CL_BREAK_IF("please implement");
-            }
+            CL_BREAK_IF("please implement");
             // fall through!
 
         case VT_INVALID:
@@ -429,7 +423,7 @@ TObjId SymProc::objByVar(const struct cl_operand &op)
     return this->objByVar(cv);
 }
 
-int addOffDerefArray(SymProc &proc, TOffset &off, const struct cl_accessor *ac)
+bool addOffDerefArray(SymProc &proc, TOffset &off, const struct cl_accessor *ac)
 {
     // read value of the operand that is used as an array index
     const struct cl_operand *opIdx = ac->data.array.index;
@@ -437,14 +431,13 @@ int addOffDerefArray(SymProc &proc, TOffset &off, const struct cl_accessor *ac)
 
     // unwrap the integral value inside the heap value (if available)
     IR::TInt idx;
-    int code = numOrRngFromVal(&idx, proc.sh(), valIdx);
-    if (code != 1)
-        return code;
+    if (!numFromVal(&idx, proc.sh(), valIdx))
+        return false;
 
     // compute the resulting offset
     const TObjType clt = targetTypeOfArray(ac->type);
     off += idx * clt->size;
-    return code;
+    return true;
 }
 
 TOffset offItem(const struct cl_accessor *ac)
@@ -497,17 +490,11 @@ TValId SymProc::targetAt(const struct cl_operand &op)
                 continue;
 
             case CL_ACCESSOR_DEREF_ARRAY:
-            {
-                int offcode = addOffDerefArray(*this, off, ac);
-                if (offcode == 1)
+                if (addOffDerefArray(*this, off, ac))
                     continue;
-                else if (offcode == 2)
-                    // not implemented yet
-                    return sh_.valCreate(VT_RANGE, VO_UNKNOWN);
                 else
                     // no clue how to compute the resulting offset
                     return sh_.valCreate(VT_UNKNOWN, VO_UNKNOWN);
-            }
 
             case CL_ACCESSOR_ITEM:
                 off += offItem(ac);

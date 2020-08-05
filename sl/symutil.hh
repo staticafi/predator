@@ -49,10 +49,6 @@ inline TValId boolToVal(const bool b)
 /// extract integral constant from the given value if possible, fail otherwise
 bool numFromVal(IR::TInt *pDst, const SymHeapCore &, TValId);
 
-/// TODO: extract integral constant from the given value if possible & return 1,
-/// return 2 if range, 0 otherwise
-int numOrRngFromVal(IR::TInt *pDst, const SymHeapCore &, TValId);
-
 /// extract integral range from the given value if possible, fail otherwise
 bool rngFromVal(IR::Range *pDst, const SymHeapCore &, TValId);
 
