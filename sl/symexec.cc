@@ -359,7 +359,7 @@ void SymExecEngine::updateStateInBranch(
         const TValId                v1,
         const TValId                v2)
 {
-    SymHeapList dst;
+    SymHeapList dst, dstSplit;
     SymProc procOrig(shOrig, &bt_);
     procOrig.setLocation(lw_);
 
@@ -374,6 +374,79 @@ void SymExecEngine::updateStateInBranch(
     const enum cl_binop_e code = static_cast<enum cl_binop_e>(insnCmp.subCode);
     if (!reflectCmpResult(dst, procOrig, code, branch, v1, v2))
         CL_DEBUG_MSG(lw_, "XXX unable to reflect comparison result");
+
+    // a successful comparison between interval (try to split) and number
+
+    CL_BREAK_IF(!dst.size());
+    SymHeapList dstTmp;
+    bool split = false;
+
+    BOOST_FOREACH(SymHeap *sh, dst) {
+        dstTmp.insert(*sh);
+        SymProc proc(*sh, &bt_);
+        proc.setLocation(lw_);
+
+        struct cl_operand op;
+        TValId valRng;
+        IR::Range rng;
+
+        for (int i = 1; i <= 2; ++i ) {
+            op = insnCmp.operands[/* src */ i];
+            valRng = proc.valFromOperand(op);
+            if (anyRangeFromVal(&rng, *sh, valRng) && !isSingular(rng)) {
+                split = true; break; // found interval
+            }
+        }
+        if (!split) goto end_split;
+
+        split = false; // interval, but not yet split
+
+#if 2 == SE_BLOCK_SCHEDULER_KIND
+#if SE_JOIN_ON_LOOP_EDGES_ONLY < 0
+// DFS without join
+        if (IR::IntMin != rng.lo && IR::IntMax == rng.hi ) {
+            // HACK: half-open interval <x,inf) to <x,x+2> - unsound for proof EXPERIMENTAL
+            rng.hi = rng.lo+2;
+            CL_WARN("reduce upper bound of half-open interval to <"
+                     <<rng.lo<<","<<rng.hi<<">");
+        } else if (IR::IntMin == rng.lo && IR::IntMax != rng.hi ) {
+            // HACK: half-open interval (-inf,x> to <x-2,x> - unsound for proof EXPERIMENTAL
+            rng.lo = rng.hi-2;
+            CL_WARN("reduce lower bound of half-open interval to <"
+                     <<rng.lo<<","<<rng.hi<<">");
+        }
+#endif
+#endif
+        // close interval - sound
+        if (IR::IntMin != rng.lo && IR::IntMax != rng.hi ) {//&&
+            //(rng.hi-rng.lo < GlConf::data.intArithmeticLimit)) {
+            // closed interval under limit SE_INT_ARITHMETIC_LIMIT
+
+            CL_DEBUG("updateStateInBranch() splitting close interval <"
+                      <<rng.lo<<","<<rng.hi<<">");
+            split = true;
+
+            IR::TInt max = rng.hi;
+            for (; rng.lo <= max; ++rng.lo) {
+                rng.hi = rng.lo; // singleton
+                IR::adjustAlignment(&rng);
+                // clone heap for each num of range
+                CL_DEBUG("updateStateInBranch() is cloning heap for value "
+                          << rng.lo << " of close interval");
+                SymHeap shDup(*sh);
+                shDup.valRestrictRange(valRng, rng);
+                Trace::waiveCloneOperation(shDup);
+                CL_BREAK_IF(!protoCheckConsistency(shDup));
+                dstSplit.insert(shDup);
+            }
+        }
+    }
+
+end_split:
+    if (split)
+        dst.swap(dstSplit);
+    else
+        dst.swap(dstTmp);
 
     CL_BREAK_IF(!dst.size());
 
