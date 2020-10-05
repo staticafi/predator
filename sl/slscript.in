@@ -130,8 +130,8 @@ run_llvm() {
     "$CLANG_HOST" $COMPILE_OPTS -emit-llvm -g -o -         \
         -Xclang -fsanitize-address-use-after-scope "$@"    \
         | "$OPT_HOST" -o $SINK                             \
-        -lowerswitch                                       \
-        -load "$PASSES_LIB" -global-vars                   \
+        -lowerswitch -unreachableblockelim                 \
+        -load "$PASSES_LIB" -global-vars -nestedgep        \
         -load "$SL_PLUG" -sl -pid-file="$pidfile" $SL_OPTS \
         3>&1 1>&2 2>&3 | grep --line-buffered -E           \
         ' \[-sl]$|CL_BREAK_IF|INT3|SIGTRAP|internal compiler error|undefined symbol'
