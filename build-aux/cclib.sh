@@ -47,5 +47,6 @@ find_opt_host() {
 find_plug() {
     test -r "${!1}" || eval $1="$topdir/${2}_build/lib${2}.so"
     test -r "${!1}" || eval $1="$topdir/lib/lib${2}.so"
+    test -r "${!1}" || eval $1="$topdir/predator/lib/lib${2}.so"
     test -r "${!1}" || die "$3 plug-in not found: ${!1}"
 }
