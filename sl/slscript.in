@@ -35,7 +35,8 @@ seek_input_file "$@" || usage
 
 # include common code base
 topdir="`dirname "$(${ABSPATH} "$SELF")"`/.."
-source "$topdir/build-aux/cclib.sh"
+cclib=$(find $topdir -name 'cclib.sh')
+source "$cclib" ||  exit 1
 
 # basic setup & initial checks
 export SINK="/dev/null"
